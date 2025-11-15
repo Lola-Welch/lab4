@@ -45,13 +45,36 @@ def insert (bst : BinarySearchTree, x : Any) -> BinarySearchTree:
     new_root = insert_into_tree(bst.comes_before, bst.tree, x)
     return BinarySearchTree(bst.comes_before, new_root)
 
-#
+# determine whether a value is stored in a given BinarySearchTree
 def lookup(bst : BinarySearchTree, x : Any) -> bool:
-    match bst.tree:
+    return looks(bst.comes_before, bst.tree, x)
+
+# helper function for lookup : finds if a value is in a BST   
+def looks(cmp : Callable[[Any, Any], bool], t : BinTree, x : Any) -> bool:
+    match t:
         case None:
             return False
         case Node(v, l, r):
-            if x < v:
-                return lookup()
+            if (not cmp(x, v)) and (not cmp(v, x)):
+                return True
+            elif cmp(x, v):
+                return looks(cmp, l, x)
+            else:
+                return looks(cmp, r, x)
             
-def looks(t : BinTree, )
+
+#
+def delete(bst : BinarySearchTree, x : Any) -> BinarySearchTree:
+    return delete(bst.comes_before, bst.tree, x)
+
+def d1(cmp : Callable[[Any, Any], bool], t : BinTree, x : Any)
+    match t:
+        case None:
+            return BinarySearchTree(cmp, None)
+        case Node(v, l, r):
+            if cmp(x, v):
+                return d1(cmp, l, x) 
+            elif cmp(v, x):
+                return d1(cmp, r, x)
+            elif (not cmp(x, v)) and (not cmp(v, x)):
+                
