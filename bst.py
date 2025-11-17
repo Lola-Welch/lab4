@@ -13,10 +13,9 @@ class Node:
     right : BinTree
     
 
-
 @dataclass (frozen=True)
 class BinarySearchTree():
-    comes_before = Callable[[Any, Any], bool]
+    comes_before : Callable[[Any, Any], bool]
     tree : BinTree
     
 
@@ -63,18 +62,135 @@ def looks(cmp : Callable[[Any, Any], bool], t : BinTree, x : Any) -> bool:
                 return looks(cmp, r, x)
             
 
-#
+# find and remove one value from a BinarySearchTree and return a new tree without that value
 def delete(bst : BinarySearchTree, x : Any) -> BinarySearchTree:
-    return delete(bst.comes_before, bst.tree, x)
+    new_root = d1(bst.comes_before, bst.tree, x)
+    return BinarySearchTree(bst.comes_before, new_root)
 
-def d1(cmp : Callable[[Any, Any], bool], t : BinTree, x : Any)
+def d1(cmp : Callable[[Any, Any], bool], t : BinTree, x : Any) -> BinTree:
     match t:
         case None:
-            return BinarySearchTree(cmp, None)
+            return None
         case Node(v, l, r):
-            if cmp(x, v):
-                return d1(cmp, l, x) 
-            elif cmp(v, x):
-                return d1(cmp, r, x)
-            elif (not cmp(x, v)) and (not cmp(v, x)):
+            
+            if(not cmp(x, v)) and (not cmp(v, x)):
+                if l is None:
+                    return r
+                if r is None:
+                    return l
+                next_node = r
+
+                while isinstance(next_node.left, Node):
+                    next_node = next_node.left
                 
+                # remove value
+                new_right = d1(cmp, r, next_node.value)
+                return Node(next_node.value, l, new_right)
+            elif cmp(x, v):
+                return Node(v, d1(cmp, l, x), r) 
+            elif cmp(v, x):
+                return Node(v, r, d1(cmp, r, x))
+            
+
+class Testing(unittest.TestCase):
+    def setUp(self) -> None:
+        self.cmp : Callable[[Any, Any], bool] = lambda a, b : a < b
+        self.empty_bst = BinarySearchTree(self.cmp, None)
+    
+    #HELPER FUNCTIONS
+    #create a BST with values from a given list
+    def _build(self, values: List[Any])-> BinarySearchTree:
+        bst = self.empty_bst
+        for v in values:
+            bst = insert(bst, v)
+        return bst
+    
+    #verify that the list is in order
+    def _inorder(self, t: BinTree) -> List[Any]:
+        match t:
+            case None:
+                return []
+            case Node(value=v, left=l, right=r):
+                return self._inorder(l) + [v] + self._inorder(r)
+            case _:
+                raise TypeError("Unexpected BinTree variant")
+
+    # is_empty
+    def test_is_empty_on_new_tree(self):
+        self.assertTrue(is_empty(self.empty_bst))
+
+    def test_is_empty_after_insert(self):
+        bst = insert(self.empty_bst, 5)
+        self.assertFalse(is_empty(bst))
+
+    # insert
+    def test_insert_basic_structure_inorder_sorted(self):
+        values = [5, 2, 8, 1, 3, 7, 9]
+        bst = self._build(values)
+        self.assertEqual(self._inorder(bst.tree), sorted(values))
+
+    def test_insert_duplicates_route_right(self):
+        values = [5, 5, 5]
+        bst = self._build(values)
+        self.assertEqual(self._inorder(bst.tree), [5, 5, 5])
+
+    # lookup
+    def test_lookup_present(self):
+        bst = self._build([5, 2, 8, 1, 3])
+        self.assertTrue(lookup(bst, 3))
+        self.assertTrue(lookup(bst, 5))
+        self.assertTrue(lookup(bst, 1))
+
+    def test_lookup_absent(self):
+        bst = self._build([5, 2, 8, 1, 3])
+        self.assertFalse(lookup(bst, 7))
+        self.assertFalse(lookup(bst, 42))
+
+    # delete
+    def test_delete_leaf(self):
+        bst = self._build([5, 2, 8, 1, 3])
+        bst = delete(bst, 1)  # delete a leaf
+        self.assertEqual(self._inorder(bst.tree), [2, 3, 5, 8])
+
+    def test_delete_one_child(self):
+        # 8 has one left child (7)
+        bst = self._build([5, 2, 8, 7])
+        bst = delete(bst, 8)
+        self.assertEqual(self._inorder(bst.tree), [2, 5, 7])
+
+    def test_delete_two_children(self):
+        # root (5) has two children; successor should be 7
+        values = [5, 2, 8, 1, 3, 7, 9]
+        bst = self._build(values)
+        bst = delete(bst, 5)
+        expected = sorted(values)
+        expected.remove(5)
+        self.assertEqual(self._inorder(bst.tree), expected)
+        self.assertFalse(lookup(bst, 5))
+
+    def test_delete_duplicate_removes_single_occurrence(self):
+        bst = self._build([5, 5, 5, 2])
+        bst = delete(bst, 5)
+        self.assertEqual(self._inorder(bst.tree), [2, 5, 5])
+        bst = delete(bst, 5)
+        self.assertEqual(self._inorder(bst.tree), [2, 5])
+
+    def test_delete_nonexistent_no_change(self):
+        values = [5, 2, 8]
+        bst = self._build(values)
+        bst2 = delete(bst, 42)
+        self.assertEqual(self._inorder(bst2.tree), sorted(values))
+        # original bst remains unchanged (immutability)
+        self.assertEqual(self._inorder(bst.tree), sorted(values))
+
+    def test_delete_until_empty(self):
+        values = [4, 2, 6, 1, 3, 5, 7]
+        bst = self._build(values)
+        for v in values:
+            bst = delete(bst, v)
+        self.assertTrue(is_empty(bst))
+        self.assertEqual(self._inorder(bst.tree), [])
+
+
+if (__name__ == '__main__'):
+    unittest.main()
