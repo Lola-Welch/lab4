@@ -23,7 +23,7 @@ def random_tree(n: int) -> BinarySearchTree:
         bst = insert(bst, x)
     return bst
 
-# Height in *edges*. Empty tree has height -1; a single-node tree has height 0.
+# Height. Empty tree has height -1; a single-node tree has height 0.
 def tree_height_edges(bst: BinarySearchTree) -> int:
 
     def h_node(t : BinTree) -> int:
