@@ -7,7 +7,7 @@ from bst import *
 from bst import BinarySearchTree, insert, lookup, delete, is_empty
 
 
-# --- Simple 2D point class for distance comparator ---
+# distance comparator help
 class Point2:
     def __init__(self, x: float, y: float):
         self.x = x
